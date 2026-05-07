@@ -109,17 +109,13 @@ fn simulate_one_round(project: &mut Project, round: u32, round_total: u32) -> an
                 .push("Implement smallest useful change".to_string());
         }
         Status::Open => {
-            if project.progress.in_progress.is_empty()
-                && let Some(task) = project.progress.todo.pop()
-            {
-                project.progress.in_progress.push(task);
-            }
-
             if let Some(task) = project.progress.in_progress.pop() {
                 project
                     .progress
                     .done
                     .push(format!("completed: {task} (round {round})"));
+            } else if let Some(task) = project.progress.todo.pop() {
+                project.progress.in_progress.push(task);
             }
 
             if project.progress.todo.is_empty() && project.progress.in_progress.is_empty() {
@@ -172,9 +168,10 @@ fn main() -> anyhow::Result<()> {
         for prompt in queued_prompts {
             let id = format!("P{next_project_index}");
             next_project_index += 1;
+            let progress_path = root.join(&id).join("MAIN.md");
             queue.push_back(Project {
-                progress_path: root.join(&id).join("MAIN.md"),
                 id,
+                progress_path,
                 progress: ProgressFile::new(prompt),
                 queued_prompts: VecDeque::new(),
             });
